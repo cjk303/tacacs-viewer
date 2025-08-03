@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Manage Backups</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            epiteal: '#006489',
+            epiqua: '#00AEEF',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <nav class="bg-white shadow p-4 flex items-center space-x-4">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Epiq Logo" class="h-10" />
+    <h1 class="text-2xl font-semibold text-epiteal">Manage Backups</h1>
+  </nav>
+
+  <div class="max-w-5xl mx-auto mt-6 p-6 bg-white rounded-xl shadow">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="p-4 rounded text-white {% if category == 'success' %}bg-epiqua{% else %}bg-red-500{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <h2 class="text-xl font-bold mb-4 text-epiteal">TACACS+ Backups</h2>
+    <ul class="mb-8">
+      {% for backup in tacacs_backups %}
+        <li class="mb-2 flex justify-between items-center border p-2 rounded">
+          <span>{{ backup.split('/')[-1] }}</span>
+          <div class="space-x-2">
+            <form method="POST" action="{{ url_for('restore_backup') }}" class="inline">
+              <input type="hidden" name="file_path" value="{{ backup }}">
+              <button type="submit" class="bg-epiteal hover:bg-epiteal/90 text-white py-1 px-3 rounded">Restore</button>
+            </form>
+            <form method="POST" action="{{ url_for('delete_backup') }}" class="inline" onsubmit="return confirm('Delete this backup?');">
+              <input type="hidden" name="file_path" value="{{ backup }}">
+              <button type="submit" class="bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded">Delete</button>
+            </form>
+          </div>
+        </li>
+      {% else %}
+        <li>No TACACS+ backups found.</li>
+      {% endfor %}
+    </ul>
+
+    <h2 class="text-xl font-bold mb-4 text-epiteal">FreeRADIUS Backups</h2>
+    <ul>
+      {% for backup in freeradius_backups %}
+        <li class="mb-2 flex justify-between items-center border p-2 rounded">
+          <span>{{ backup.split('/')[-1] }}</span>
+          <div class="space-x-2">
+            <form method="POST" action="{{ url_for('restore_backup') }}" class="inline">
+              <input type="hidden" name="file_path" value="{{ backup }}">
+              <button type="submit" class="bg-epiteal hover:bg-epiteal/90 text-white py-1 px-3 rounded">Restore</button>
+            </form>
+            <form method="POST" action="{{ url_for('delete_backup') }}" class="inline" onsubmit="return confirm('Delete this backup?');">
+              <input type="hidden" name="file_path" value="{{ backup }}">
+              <button type="submit" class="bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded">Delete</button>
+            </form>
+          </div>
+        </li>
+      {% else %}
+        <li>No FreeRADIUS backups found.</li>
+      {% endfor %}
+    </ul>
+
+    <a href="{{ url_for('index') }}" class="mt-6 inline-block text-epiteal hover:underline">← Back to Home</a>
+  </div>
+</body>
+</html>

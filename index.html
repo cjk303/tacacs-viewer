@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TACACS+ & FreeRADIUS Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            epiteal: '#006489',
+            epiqua: '#00AEEF',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <nav class="bg-white shadow p-4 flex items-center space-x-4">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Epiq Logo" class="h-10" />
+    <h1 class="text-2xl font-semibold text-epiteal">TACACS+ & FreeRADIUS Manager</h1>
+  </nav>
+
+  <div class="max-w-5xl mx-auto mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+    <a href="{{ url_for('backups') }}" class="bg-white p-6 rounded-xl shadow hover:shadow-md border-t-4 border-epiqua">
+      <h2 class="text-xl font-bold text-epiqua">💾 Manage Backups</h2>
+    </a>
+    <a href="{{ url_for('users_groups') }}" class="bg-white p-6 rounded-xl shadow hover:shadow-md border-t-4 border-epiqua">
+      <h2 class="text-xl font-bold text-epiqua">👥 Manage Users & Groups</h2>
+    </a>
+    <form method="POST" action="{{ url_for('restart_tacacs') }}" class="bg-white p-6 rounded-xl shadow hover:shadow-md border-t-4 border-epiqua flex flex-col justify-center items-center cursor-pointer">
+      <button type="submit" class="text-xl font-bold text-epiqua">🔄 Restart TACACS+</button>
+    </form>
+    <form method="POST" action="{{ url_for('restart_freeradius') }}" class="bg-white p-6 rounded-xl shadow hover:shadow-md border-t-4 border-epiqua flex flex-col justify-center items-center cursor-pointer">
+      <button type="submit" class="text-xl font-bold text-epiqua">🔄 Restart FreeRADIUS</button>
+    </form>
+  </div>
+</body>
+</html>
