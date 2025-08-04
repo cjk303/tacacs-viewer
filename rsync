@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# CONFIGURATION
+FILE_TO_SYNC="$1"
+DEST_PATH="$2"
+HOSTS_FILE="hosts.txt"
+LOG_FILE="sync_report_$(date +%Y%m%d_%H%M%S).log"
+EMAIL="kamil.olszewski@epiqcorp.com"
+SUBJECT="Rsync Report - $(date)"
+
+# Check arguments
+if [[ -z "$FILE_TO_SYNC" || -z "$DEST_PATH" ]]; then
+  echo "Usage: $0 <file_to_sync> <destination_path>"
+  exit 1
+fi
+
+# Check if hosts file exists
+if [[ ! -f "$HOSTS_FILE" ]]; then
+  echo "Error: hosts file '$HOSTS_FILE' not found."
+  exit 2
+fi
+
+# Logging
+echo "Starting rsync sync at $(date)" > "$LOG_FILE"
+echo "File: $FILE_TO_SYNC" >> "$LOG_FILE"
+echo "Destination path: $DEST_PATH" >> "$LOG_FILE"
+echo "Hosts list: $HOSTS_FILE" >> "$LOG_FILE"
+echo "----------------------------------------" >> "$LOG_FILE"
+
+FAILURES=()
+
+# Loop through hosts and sync
+while read -r HOST; do
+  if [[ -z "$HOST" || "$HOST" =~ ^# ]]; then
+    continue  # skip empty lines or comments
+  fi
+
+  echo "Syncing to $HOST..." | tee -a "$LOG_FILE"
+  rsync -avz "$FILE_TO_SYNC" "$HOST:$DEST_PATH" >> "$LOG_FILE" 2>&1
+
+  if [[ $? -eq 0 ]]; then
+    echo "SUCCESS: $HOST" | tee -a "$LOG_FILE"
+  else
+    echo "FAILURE: $HOST" | tee -a "$LOG_FILE"
+    FAILURES+=("$HOST")
+  fi
+
+  echo "----------------------------------------" >> "$LOG_FILE"
+done < "$HOSTS_FILE"
+
+# Summary
+echo "" >> "$LOG_FILE"
+echo "Sync Completed at $(date)" >> "$LOG_FILE"
+echo "Failures: ${#FAILURES[@]}" >> "$LOG_FILE"
+if [[ ${#FAILURES[@]} -gt 0 ]]; then
+  echo "Failed Hosts:" >> "$LOG_FILE"
+  for FAIL in "${FAILURES[@]}"; do
+    echo "- $FAIL" >> "$LOG_FILE"
+  done
+
+  # Send email
+  mailx -s "$SUBJECT - FAILURES DETECTED" "$EMAIL" < "$LOG_FILE"
+else
+  echo "All syncs completed successfully." >> "$LOG_FILE"
+fi
+
+# Print report location
+echo "Report saved to $LOG_FILE"
