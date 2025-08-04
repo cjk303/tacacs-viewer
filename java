@@ -33,60 +33,65 @@ class DashboardController {
 
     @GetMapping("/")
     public String home(Model model) throws IOException, InterruptedException {
-        boolean tacacsRunning = isTacacsRunning();
-        boolean radiusRunning = isRadiusRunning();
+        boolean tacacsRunning = isServiceActive("tac_plus");
+        boolean radiusRunning = isServiceActive("freeradius");
 
         model.addAttribute("tacacsRunning", tacacsRunning);
         model.addAttribute("radiusRunning", radiusRunning);
         model.addAttribute("tacacsValid", true); // Skip config validation for tacacs
         model.addAttribute("radiusValid", validateRadiusConfig());
-        model.addAttribute("logs", getRecentLogs());
+        model.addAttribute("logs", getSystemLogs());
 
         return "dashboard";
     }
 
     @PostMapping("/restart/tacacs")
     public String restartTacacs() throws IOException, InterruptedException {
-        Process process = new ProcessBuilder("docker", "restart", "tac_plus").start();
-        process.waitFor();
+        restartService("tac_plus");
         return "redirect:/";
     }
 
     @PostMapping("/restart/radius")
     public String restartRadius() throws IOException, InterruptedException {
-        Process process = new ProcessBuilder("sudo", "systemctl", "restart", "freeradius").start();
-        process.waitFor();
+        restartService("freeradius");
         return "redirect:/";
     }
 
-    private boolean isTacacsRunning() throws IOException, InterruptedException {
-        Process process = new ProcessBuilder("docker", "inspect", "-f", "{{.State.Running}}", "tac_plus").start();
-        try (Scanner scanner = new Scanner(process.getInputStream())) {
+    private boolean isServiceActive(String service) throws IOException, InterruptedException {
+        if ("tac_plus".equals(service)) {
+            // Use shell to properly handle the curly braces
+            Process process = new ProcessBuilder(
+                "sh", "-c", "docker inspect -f '{{.State.Running}}' tac_plus"
+            ).start();
+            Scanner scanner = new Scanner(process.getInputStream());
             if (scanner.hasNext()) {
                 String result = scanner.next().trim();
                 return result.equalsIgnoreCase("true");
             }
             return false;
+        } else {
+            Process process = new ProcessBuilder("systemctl", "is-active", service).start();
+            return process.waitFor() == 0;
         }
     }
 
-    private boolean isRadiusRunning() throws IOException, InterruptedException {
-        Process process = new ProcessBuilder("systemctl", "is-active", "--quiet", "freeradius").start();
-        int exitCode = process.waitFor();
-        return exitCode == 0;
+    private void restartService(String service) throws IOException, InterruptedException {
+        if ("tac_plus".equals(service)) {
+            new ProcessBuilder("docker", "restart", "tac_plus").start().waitFor();
+        } else {
+            new ProcessBuilder("sudo", "systemctl", "restart", service).start().waitFor();
+        }
     }
 
     private boolean validateRadiusConfig() throws IOException, InterruptedException {
         Process process = new ProcessBuilder("freeradius", "-CX").start();
-        int exitCode = process.waitFor();
-        return exitCode == 0;
+        return process.waitFor() == 0;
     }
 
-    private String getRecentLogs() throws IOException {
+    private String getSystemLogs() throws IOException {
         Process process = new ProcessBuilder("journalctl", "-n", "10", "--no-pager").start();
-        try (Scanner scanner = new Scanner(process.getInputStream()).useDelimiter("\\A")) {
-            return scanner.hasNext() ? scanner.next() : "No logs available.";
-        }
+        Scanner scanner = new Scanner(process.getInputStream()).useDelimiter("\\A");
+        return scanner.hasNext() ? scanner.next() : "No logs available.";
     }
 }
 
