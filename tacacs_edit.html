@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="layout :: section">
+<section>
+    <h2 class="mb-3">TACACS+ Configuration</h2>
+    <form method="post" action="/tacacs/edit">
+        <div class="mb-3">
+            <label for="configContent" class="form-label">Configuration:</label>
+            <textarea class="form-control" id="configContent" name="configContent" rows="20" th:text="${configContent}"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <div th:if="${message}" class="alert alert-success mt-3" th:text="${message}"></div>
+    </form>
+</section>
+</html>
