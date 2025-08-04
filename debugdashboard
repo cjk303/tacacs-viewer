@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:insert="layout :: section">
-  <body>
-    <section>
-      <h1>Dashboard with Layout</h1>
-      <p th:text="'Tacacs running: ' + ${tacacsRunning}"></p>
-    </section>
-  </body>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="layout :: content">
+  <section>
+    <h2 class="mb-4">TACACS+ & RADIUS Dashboard</h2>
+    <!-- your dashboard content here -->
+  </section>
 </html>
