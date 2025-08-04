@@ -1,8 +1,46 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="layout :: content">
-  <section>
-    <h2 class="mb-4">TACACS+ & RADIUS Dashboard</h2>
-    <!-- your dashboard content here -->
-  </section>
+<section>
+  <h2 class="mb-4">TACACS+ & RADIUS Dashboard</h2>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">TACACS+ Service</h5>
+          <p>Status: 
+            <span th:text="${tacacsRunning} ? 'Running' : 'Stopped'" 
+                  th:classappend="${tacacsRunning} ? 'text-success' : 'text-danger'"></span>
+          </p>
+          <form method="post" action="/restart/tacacs">
+            <button class="btn btn-sm btn-primary">Restart</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">RADIUS Service</h5>
+          <p>Status: 
+            <span th:text="${radiusRunning} ? 'Running' : 'Stopped'" 
+                  th:classappend="${radiusRunning} ? 'text-success' : 'text-danger'"></span>
+          </p>
+          <form method="post" action="/restart/radius">
+            <button class="btn btn-sm btn-primary">Restart</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-4">
+    <div class="card-body">
+      <h5 class="card-title">Recent Logs</h5>
+      <pre th:text="${logs}">Loading...</pre>
+    </div>
+  </div>
+</section>
 </html>
