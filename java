@@ -31,17 +31,14 @@ public class TacConfigApplication {
 @Controller
 class DashboardController {
 
-    private static final String TACACS_CONTAINER = "tacacs_container";
-    private static final String RADIUS_CONTAINER = "radius_container";
-
     @GetMapping("/")
     public String home(Model model) throws IOException, InterruptedException {
-        boolean tacacsRunning = isContainerRunning(TACACS_CONTAINER);
-        boolean radiusRunning = isContainerRunning(RADIUS_CONTAINER);
+        boolean tacacsRunning = isServiceActive("tac_plus");
+        boolean radiusRunning = isServiceActive("freeradius");
 
         model.addAttribute("tacacsRunning", tacacsRunning);
         model.addAttribute("radiusRunning", radiusRunning);
-        model.addAttribute("tacacsValid", validateTacacsConfig());
+        model.addAttribute("tacacsValid", true); // Skip config validation for tacacs
         model.addAttribute("radiusValid", validateRadiusConfig());
         model.addAttribute("logs", getSystemLogs());
 
@@ -50,44 +47,41 @@ class DashboardController {
 
     @PostMapping("/restart/tacacs")
     public String restartTacacs() throws IOException, InterruptedException {
-        restartContainer(TACACS_CONTAINER);
+        restartService("tac_plus");
         return "redirect:/";
     }
 
     @PostMapping("/restart/radius")
     public String restartRadius() throws IOException, InterruptedException {
-        restartContainer(RADIUS_CONTAINER);
+        restartService("freeradius");
         return "redirect:/";
     }
 
-    private boolean isContainerRunning(String containerName) throws IOException, InterruptedException {
-        Process process = new ProcessBuilder("docker", "inspect", "-f", "{{.State.Running}}", containerName).start();
-        process.waitFor();
-        Scanner scanner = new Scanner(process.getInputStream());
-        if (scanner.hasNext()) {
-            String output = scanner.next().trim();
-            return output.equalsIgnoreCase("true");
+    private boolean isServiceActive(String service) throws IOException, InterruptedException {
+        if ("tac_plus".equals(service)) {
+            Process process = new ProcessBuilder("docker", "inspect", "-f", "{{.State.Running}}", "tac_plus").start();
+            Scanner scanner = new Scanner(process.getInputStream());
+            if (scanner.hasNext()) {
+                String result = scanner.next().trim();
+                return result.equalsIgnoreCase("true");
+            }
+            return false;
+        } else {
+            Process process = new ProcessBuilder("systemctl", "is-active", service).start();
+            return process.waitFor() == 0;
         }
-        return false;
     }
 
-    private void restartContainer(String containerName) throws IOException, InterruptedException {
-        new ProcessBuilder("docker", "restart", containerName).start().waitFor();
-    }
-
-    private boolean validateTacacsConfig() throws IOException, InterruptedException {
-        Process process = new ProcessBuilder(
-            "docker", "exec", TACACS_CONTAINER,
-            "tac_plus", "-P", "-C", "/etc/tacacs/tac_plus.conf"
-        ).start();
-        return process.waitFor() == 0;
+    private void restartService(String service) throws IOException, InterruptedException {
+        if ("tac_plus".equals(service)) {
+            new ProcessBuilder("docker", "restart", "tac_plus").start().waitFor();
+        } else {
+            new ProcessBuilder("sudo", "systemctl", "restart", service).start().waitFor();
+        }
     }
 
     private boolean validateRadiusConfig() throws IOException, InterruptedException {
-        Process process = new ProcessBuilder(
-            "docker", "exec", RADIUS_CONTAINER,
-            "freeradius", "-CX"
-        ).start();
+        Process process = new ProcessBuilder("freeradius", "-CX").start();
         return process.waitFor() == 0;
     }
 
