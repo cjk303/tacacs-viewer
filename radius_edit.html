@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="layout :: section">
+<section>
+    <h2 class="mb-3">RADIUS Users File</h2>
+    <form method="post" action="/radius/edit">
+        <div class="mb-3">
+            <label for="usersContent" class="form-label">Users Content:</label>
+            <textarea class="form-control" id="usersContent" name="usersContent" rows="20" th:text="${usersContent}"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <div th:if="${message}" class="alert alert-success mt-3" th:text="${message}"></div>
+    </form>
+</section>
+</html>
