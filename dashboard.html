@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="layout :: section">
+<section>
+    <h2 class="mb-3">Dashboard</h2>
+
+    <ul class="list-group">
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            TACACS+ Status:
+            <span class="badge bg-success" th:if="${tacacsRunning}">Running</span>
+            <span class="badge bg-danger" th:if="${!tacacsRunning}">Stopped</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            RADIUS Status:
+            <span class="badge bg-success" th:if="${radiusRunning}">Running</span>
+            <span class="badge bg-danger" th:if="${!radiusRunning}">Stopped</span>
+        </li>
+    </ul>
+
+    <form method="post" action="/restart/tacacs" class="d-inline mt-3">
+        <button class="btn btn-outline-primary btn-sm">Restart TACACS+</button>
+    </form>
+    <form method="post" action="/restart/radius" class="d-inline mt-3 ms-2">
+        <button class="btn btn-outline-primary btn-sm">Restart RADIUS</button>
+    </form>
+
+    <div class="mt-4">
+        <h4>Recent Logs</h4>
+        <pre class="bg-light p-3 rounded" th:text="${logs}">No logs.</pre>
+    </div>
+</section>
+</html>
