@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:insert="layout :: section">
+  <body>
+    <section>
+      <h1>Dashboard with Layout</h1>
+      <p th:text="'Tacacs running: ' + ${tacacsRunning}"></p>
+    </section>
+  </body>
+</html>
