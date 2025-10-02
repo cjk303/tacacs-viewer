@@ -1,0 +1,65 @@
+import requests
+
+# --- CONFIG ---
+BASE_URL  = "https://your-delinea-server/SecretServer"
+USERNAME  = "api_user"      # your Delinea account
+PASSWORD  = "superSecret!"  # that user’s password
+DOMAIN    = ""              # set if using AD, else leave blank
+
+# Disable warnings if server uses self-signed SSL
+requests.packages.urllib3.disable_warnings()
+
+def get_access_token(username, password, domain=""):
+    url = f"{BASE_URL}/{BASE_URL}/oauth2/token"
+    data = {
+        "username": username,
+        "password": password,
+        "grant_type": "password",
+        "domain": domain
+    }
+    r = requests.post(url, data=data, verify=False)
+    r.raise_for_status()
+    return r.json()["access_token"]
+
+def list_secrets(token):
+    url = f"{BASE_URL}/{BASE_URL}/api/v1/secrets"
+    headers = {"Authorization": f"Bearer {token}"}
+    page, page_size = 0, 100
+    secrets = []
+
+    while True:
+        params = {"take": page_size, "skip": page * page_size}
+        r = requests.get(url, headers=headers, params=params, verify=False)
+        r.raise_for_status()
+        data = r.json()
+        items = data.get("items", [])
+        if not items:
+            break
+        secrets.extend(items)
+        page += 1
+    return secrets
+
+def get_secret_detail(token, secret_id):
+    url = f"{BASE_URL}/api/v1/secrets/{secret_id}"
+    headers = {"Authorization": f"Bearer {token}"}
+    r = requests.get(url, headers=headers, verify=False)
+    r.raise_for_status()
+    return r.json()
+
+def main():
+    token = get_access_token(USERNAME, PASSWORD, DOMAIN)
+    secrets = list_secrets(token)
+    
+    print(f"Found {len(secrets)} secrets:\n")
+    for s in secrets:
+        detail = get_secret_detail(token, s['id'])
+        name = detail.get('name')
+        fields = {f['fieldName']: f['itemValue'] for f in detail.get('items', [])}
+        print(f"Secret: {name}{name} (ID {s['id']}){s['id']})")
+        for k,v in fields.items():
+            print(f"   {k}:{k}: {v}")
+{v}")
+        print("")
+
+if __name__ == "__main__":
+    main()
